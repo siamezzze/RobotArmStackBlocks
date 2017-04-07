@@ -38,16 +38,36 @@ if provide_new_points
     save('points.mat', 'points2D', 'points3D');
 end
 % Calculate calibration matrix (with normalization).
-M = calibrate_norm(points2D, points3D);
+used_points = n - 4; % Leave some for testing.
+M = calibrate_norm(points2D(:, 1:used_points), points3D(:, 1:used_points));
 save('calibrated.mat', 'M');
 
+% Test it:
+% Translate 2D -> 3D using calibration matrix.
 p3 = [points3D; ones(1, n)];
-p2 = M * p3;
-p2 = [p2(1, :) ./ p2(3, :); p2(2, :) ./ p2(3, :)];
+p2_hat = M * p3;
+p2_hat = [p2_hat(1, :) ./ p2_hat(3, :); p2_hat(2, :) ./ p2_hat(3, :)];
 hold on;
-x = p2(1, :)'; y = p2(2, :)';
+x = p2_hat(1, :)'; y = p2_hat(2, :)';
 n = size(x, 1);
 plot(x, y, 'r.');
 a = [1:n]'; b = num2str(a); c = cellstr(b);
 dx = 0.1; dy = 0.1;
 text(x+dx, y+dy, c, 'Color', 'red');
+
+err1 = mean(mean((p2_hat(:, used_points:n) - points2D(:, used_points:n)) .^ 2, 2));
+
+% Inverse transform.
+p2 = [points2D; ones(1, n)];
+% Need to find Minv that satisfies:
+% p2 * Minv = p3;
+M_inv = pinv(M);
+
+%M_inv = inv(M' * M) * M';
+p3_hat = M_inv * p2;
+p3_hat = [p3_hat(1, :) ./ p3_hat(4, :); p3_hat(2, :) ./ p3_hat(4, :); p3_hat(3, :) ./ p3_hat(4, :)];
+
+err2 = mean(mean((p3_hat(:, used_points:n) - points3D(:, used_points:n)) .^ 2, 2));
+
+fprintf('MSE for direct transform (3D -> 2D): %f\n', err1);
+fprintf('MSE for inverse transform (2D -> 3D): %f\n', err2);
