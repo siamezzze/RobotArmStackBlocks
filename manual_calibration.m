@@ -1,4 +1,5 @@
-image1 = imread(fullfile('blocks_photos', 'blocks1.jpg'));
+image1 = imread(fullfile('kinekt', '0021.bmp'));
+% Set to 1 to select new points.
 provide_new_points = 0;
 
 figure(1);
@@ -13,6 +14,7 @@ else
     load('points.mat');
 end;
 hold on;
+
 x = points2D(1, :)'; y = points2D(2, :)';
 n = size(x, 1);
 plot(x, y, 'g.');
@@ -20,6 +22,10 @@ a = [1:n]'; b = num2str(a); c = cellstr(b);
 dx = 0.1; dy = 0.1;
 text(x+dx, y+dy, c, 'Color', 'green');
 
+x0 = 87;
+y0 = 129;
+z0 = 0;
+h = 50;
 % Get (or load) 3D points.
 if provide_new_points
     % Ask user for coordinates of each point.
@@ -27,11 +33,11 @@ if provide_new_points
     disp('Now, give the 3D coordinates for each of the marked points');
     for i=1:n
         prompt = sprintf('Point %d, X = ', i);
-        x = input(prompt);
+        x = x0 + h * input(prompt);
         prompt = sprintf('Point %d, Y = ', i);
-        y = input(prompt);
+        y = y0 + h * input(prompt);
         prompt = sprintf('Point %d, Z = ', i);
-        z = input(prompt);
+        z = z0 + h * input(prompt);
         points3D(i, :) = [x y z];
     end
     points3D = points3D';
@@ -39,8 +45,8 @@ if provide_new_points
 end
 % Calculate calibration matrix (with normalization).
 used_points = n - 4; % Leave some for testing.
-M = calibrate_norm(points2D(:, 1:used_points), points3D(:, 1:used_points));
-save('calibrated.mat', 'M');
+M = calibrate(points2D(:, 1:used_points), points3D(:, 1:used_points));
+% save('calibrated.mat', 'M');
 
 % Test it:
 % Translate 2D -> 3D using calibration matrix.
@@ -61,6 +67,7 @@ err1 = mean(mean((p2_hat(:, used_points:n) - points2D(:, used_points:n)) .^ 2, 2
 p2 = [points2D; ones(1, n)];
 % Need to find Minv that satisfies:
 % p2 * Minv = p3;
+[K, R, C] = decompose(M);
 M_inv = pinv(M);
 
 %M_inv = inv(M' * M) * M';
