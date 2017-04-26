@@ -45,7 +45,7 @@ if provide_new_points
 end
 % Calculate calibration matrix (with normalization).
 used_points = n - 4; % Leave some for testing.
-M = calibrate(points2D(:, 1:used_points), points3D(:, 1:used_points));
+M = calibrate_norm(points2D(:, 1:used_points), points3D(:, 1:used_points));
 % save('calibrated.mat', 'M');
 
 % Test it:
@@ -63,16 +63,9 @@ text(x+dx, y+dy, c, 'Color', 'red');
 
 err1 = mean(mean((p2_hat(:, used_points:n) - points2D(:, used_points:n)) .^ 2, 2));
 
-% Inverse transform.
-p2 = [points2D; ones(1, n)];
-% Need to find Minv that satisfies:
-% p2 * Minv = p3;
-[K, R, C] = decompose(M);
-M_inv = pinv(M);
 
-%M_inv = inv(M' * M) * M';
-p3_hat = M_inv * p2;
-p3_hat = [p3_hat(1, :) ./ p3_hat(4, :); p3_hat(2, :) ./ p3_hat(4, :); p3_hat(3, :) ./ p3_hat(4, :)];
+p3_hat = inverse_transform(M, points2D, x0, y0, 25, h);
+
 
 err2 = mean(mean((p3_hat(:, used_points:n) - points3D(:, used_points:n)) .^ 2, 2));
 
