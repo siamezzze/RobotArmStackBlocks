@@ -4,9 +4,10 @@ z0 = 0;
 h = 50;
 % Take photo
 img = CMD_GRAB_IMAGE();
+%img = imread(fullfile('kinekt', '0021.bmp'));
 % Calibrate
-run manual_calibration.m
-%M = calibrate_from_image(img);
+%run manual_calibration.m
+M = calibrate_from_image(img, 0, 'points.mat', x0, y0, z0, h);
 % Locate blocks
 [red, green, blue] = locate_blocks(img);
 red_3D = inverse_transform(M, red, x0, y0, z0, h);
