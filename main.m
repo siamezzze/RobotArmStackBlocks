@@ -9,7 +9,9 @@ img = CMD_GRAB_IMAGE();
 %run manual_calibration.m
 M = calibrate_from_image(img, 0, 'points.mat', x0, y0, z0, h);
 % Locate blocks
-[red, green, blue] = locate_blocks(img);
+[red, green, blue] = cubes_segment(img);
+
+
 red_3D = inverse_transform(M, red, x0, y0, z0, h);
 green_3D = inverse_transform(M, green, x0, y0, z0, h);
 blue_3D = inverse_transform(M, blue, x0, y0, z0, h);
